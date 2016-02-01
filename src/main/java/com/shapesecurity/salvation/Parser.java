@@ -389,15 +389,8 @@ public class Parser {
             case "'unsafe-redirect'":
                 this.warn(token, "'unsafe-redirect' has been removed from CSP as of version 2.0.");
                 return KeywordSource.UnsafeRedirect;
-            case "self":
-            case "unsafe-inline":
-            case "unsafe-eval":
-            case "unsafe-redirect":
-            case "none":
-                this.warn(token,
-                    "This host name is unusual, and likely meant to be a keyword that is missing the required quotes: \'"
-                        + token.value.toLowerCase() + "\'.");
             default:
+                checkForUnquotedKeyword(token);
                 if (token.value.startsWith("'nonce-")) {
                     String nonce = token.value.substring(7, token.value.length() - 1);
                     NonceSource nonceSource = new NonceSource(nonce);
@@ -442,29 +435,10 @@ public class Parser {
                         throw INVALID_SOURCE_EXPR;
                     }
                     return hashSource;
-                } else if (token.value.matches("^" + Constants.schemePart + ":$")) {
-                    return new SchemeSource(token.value.substring(0, token.value.length() - 1));
                 } else {
-                    Matcher matcher = Constants.hostSourcePattern.matcher(token.value);
-                    if (matcher.find()) {
-                        String scheme = matcher.group("scheme");
-                        if (scheme != null)
-                            scheme = scheme.substring(0, scheme.length() - 3);
-                        String portString = matcher.group("port");
-                        int port;
-                        if (portString == null) {
-                            port = scheme == null ?
-                                Constants.EMPTY_PORT :
-                                SchemeHostPortTriple.defaultPortForProtocol(scheme);
-                        } else {
-                            port = portString.equals(":*") ?
-                                Constants.WILDCARD_PORT :
-                                Integer.parseInt(portString.substring(1));
-                        }
-                        String host = matcher.group("host");
-                        String path = matcher.group("path");
-                        return new HostSource(scheme, host, port, path);
-                    }
+                    SourceExpression source = (SourceExpression)parseSource(token);
+                    if (source != null)
+                        return source;
                 }
         }
         this.error(token, "Expecting source-expression but found \"" + token.value + "\".");
@@ -505,6 +479,15 @@ public class Parser {
         if (token.value.equalsIgnoreCase("'self'")) {
             return KeywordSource.Self;
         }
+        checkForUnquotedKeyword(token);
+        AncestorSource source = (AncestorSource)parseSource(token);
+        if (source != null)
+            return source;
+        this.error(token, "Expecting ancestor-source but found \"" + token.value + "\".");
+        throw INVALID_ANCESTOR_SOURCE;
+    }
+
+    @Nullable private DirectiveValue parseSource(Token token) {
         if (token.value.matches("^" + Constants.schemePart + ":$")) {
             return new SchemeSource(token.value.substring(0, token.value.length() - 1));
         } else {
@@ -526,8 +509,15 @@ public class Parser {
                 return new HostSource(scheme, host, port, path);
             }
         }
-        this.error(token, "Expecting ancestor-source but found \"" + token.value + "\".");
-        throw INVALID_ANCESTOR_SOURCE;
+        return null;
+    }
+
+    private void checkForUnquotedKeyword(@Nonnull Token token) {
+        if (Constants.unquotedKeywordPattern.matcher(token.value).find()) {
+            this.warn(token,
+                "This host name is unusual, and likely meant to be a keyword that is missing the required quotes: \'"
+                    + token.value.toLowerCase() + "\'.");
+        }
     }
 
     @Nonnull private ReferrerValue parseReferrerToken(@Nonnull Token directiveNameToken) throws DirectiveParseException {
