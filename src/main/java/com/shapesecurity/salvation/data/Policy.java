@@ -260,15 +260,11 @@ public class Policy implements Show {
         }
     }
 
-    // only add a directive if it doesn't exist; used for handling duplicate directives in CSP headers
     public <V extends DirectiveValue, T extends Directive<V>> void addDirective(@Nonnull T d) {
-        Directive<? extends DirectiveValue> directive = this.directives.get(d.getClass());
-        if (directive == null) {
-            this.directives.put(d.getClass(), d);
-            this.expandDefaultSrc();
-            this.resolveSelf();
-            this.optimise();
-        }
+        this.directives.put(d.getClass(), d);
+        this.expandDefaultSrc();
+        this.resolveSelf();
+        this.optimise();
     }
 
     @Nonnull public Collection<Directive<? extends DirectiveValue>> getDirectives() {
