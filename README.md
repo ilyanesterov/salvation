@@ -11,7 +11,7 @@ This is a general purpose library for working with Content Security Policy polic
 
 ### Try It
 
-[cspvalidator.org](https://cspvalidator.org) uses salvation to demonstrate some of it's features.
+[cspvalidator.org](https://cspvalidator.org) demonstrates some of the features of salvation.
 
 ### Install
 
