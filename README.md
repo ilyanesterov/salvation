@@ -9,9 +9,7 @@ This is a general purpose library for working with Content Security Policy polic
 * safely create, manipulate, and merge CSP policies
 * render and optimise CSP policies
 
-### Try It
-
-[cspvalidator.org](https://cspvalidator.org) demonstrates some of the features of salvation.
+[cspvalidator.org](https://cspvalidator.org) demonstrates some of the features of the _salvation_ in action.
 
 ### Install
 
